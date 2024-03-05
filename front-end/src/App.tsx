@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -10,23 +11,24 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
+import EditIcon from '@mui/icons-material/Edit';
 import Typography from '@mui/material/Typography';
 import DeleteIcon from '@mui/icons-material/Delete';
-import * as React from 'react';
 import axios from "axios";
 import './App.css';
 
-interface Todo {
-  title: string;
+interface TodoProps {
+  id: number,
+  title: string,
   status: boolean
 }
 
 function App() {
-  const [todos, setTodos] = React.useState<Array<any>>([])
-  const [newTodoTitle, setNewTodoTitle] = React.useState<string>('');
+  const [todos, setTodos] = useState<TodoProps[]>([]);
+  const [newTodoTitle, setNewTodoTitle] = useState<string>('');
 
-  React.useEffect(() => {
-    axios.get('http://localhost:3000/get')
+  useEffect(() => {
+    axios.get<TodoProps[]>('http://localhost:3000/get')
       .then(response => {
         setTodos(response.data);
       })
@@ -36,20 +38,20 @@ function App() {
   }, []);
 
   const handleAddTodo = () => {
-    const newTodo: Todo = {
-      title: newTodoTitle,
-      status: false,
-    };
-    axios.post('http://localhost:3000/post', newTodo)
+    if (!newTodoTitle) {
+      return;
+    }
+    axios.post('http://localhost:3000/post', { title: newTodoTitle })
       .then(response => {
-        window.location.reload()
+        setTodos(todo => [...todo, response.data]);
+        setNewTodoTitle('');
       })
       .catch(error => {
         console.error('Error adding new todo:', error);
       });
   };
 
-  const handleDeleteTodo = (id: number) =>()=> {
+  const handleDeleteTodo = (id: number) => () => {
     axios.delete(`http://localhost:3000/get/${id}`)
       .then(response => {
         setTodos(todos.filter(todo => todo.id !== id));
@@ -58,6 +60,27 @@ function App() {
         console.error('Error deleting todo:', error);
       });
   };
+
+  const handleUpdateTitle = (id: number) => () => {
+    if (!newTodoTitle) {
+      alert("Untuk Edit isi bagian To-do list dan click edit icon")
+      return;
+    }
+    axios.put(`http://localhost:3000/post/${id}`, { title: newTodoTitle })
+      .then(response => {
+        const updatedTodos = todos.map(todo => {
+          if (todo.id === id) {
+            return { ...todo, title: newTodoTitle };
+          }
+          return todo;
+        });
+        setTodos(updatedTodos);
+        setNewTodoTitle('');
+      })
+      .catch(error => {
+        console.error('Error updating todo:', error);
+      });
+  }
 
   const handleUpdateTodo = (id: number) => () => {
     const updatedTodos = todos.map(todo => {
@@ -78,31 +101,35 @@ function App() {
 
   return (
     <>
-      <Card sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 500,padding:3 }}>
+      <Card sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 500, padding: 3 }}>
         <CardContent >
           <Typography sx={{ fontSize: 42 }} color="text.secondary">Todo List</Typography>
-          <Stack spacing={1} sx={{ width: 300 }}>
-            <TextField
-              id="outlined-helperText"
-              label="To-do List"
-              value={newTodoTitle}
-              onChange={(e) => setNewTodoTitle(e.target.value)}
-            />
-            <Button variant="contained" onClick={handleAddTodo}>+ ADD</Button>
-          </Stack>
-          <Card sx={{ maxWidth: 300, mt: 2 }}>
+          <TextField
+            id="outlined-helperText"
+            sx={{ mb: 2 }}
+            label="To-do List"
+            fullWidth
+            value={newTodoTitle}
+            onChange={(e) => setNewTodoTitle(e.target.value)}
+          />
+          <Button variant="contained" fullWidth onClick={handleAddTodo}>+ ADD</Button>
+          <Card sx={{ minWidth: 300, mt: 2 }}>
             <CardContent>
               <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
                 {todos.map((value) => {
                   const labelId = `checkbox-list-label-${value.id}`;
-
                   return (
                     <ListItem
                       key={value.id}
                       secondaryAction={
-                        <IconButton edge="end" aria-label="comments" onClick={handleDeleteTodo(value.id)}>
-                          <DeleteIcon style={{ color: "red" }} />
-                        </IconButton>
+                        <Stack direction="row">
+                          <IconButton edge="end" aria-label="comments" onClick={handleUpdateTitle(value.id)}>
+                            <EditIcon style={{ color: "green" }} />
+                          </IconButton>
+                          <IconButton edge="end" aria-label="comments" onClick={handleDeleteTodo(value.id)}>
+                            <DeleteIcon style={{ color: "red" }} />
+                          </IconButton>
+                        </Stack>
                       }
                       disablePadding
                     >
@@ -116,7 +143,7 @@ function App() {
                             inputProps={{ 'aria-labelledby': labelId }}
                           />
                         </ListItemIcon>
-                        <ListItemText id={labelId} primary={value.title} style={{ textDecoration: value.status ? 'line-through' : 'none' }} />
+                        <ListItemText sx={{ mr: 4 }} id={labelId} primary={value.title} style={{ textDecoration: value.status ? 'line-through' : 'none' }} />
                       </ListItemButton>
                     </ListItem>
                   );
@@ -132,4 +159,4 @@ function App() {
   )
 }
 
-export default App
+export default App;
