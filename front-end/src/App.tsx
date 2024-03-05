@@ -65,7 +65,7 @@ function App() {
   };
 
   const handleUpdateTitle = (id: number) => () => {
-    setState(!state) ;
+    setState(!state);
     if (!newTodoTitle) {
       setNewTodoTitle(todos.find(todo => todo.id === id)?.title || '')
       setClickId(id)
@@ -109,6 +109,16 @@ function App() {
       });
   };
 
+  const handleKeyDown = (event : React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      if (state) {
+        handleUpdateTitle(clickId)();
+      } else {
+        handleAddTodo();
+      }
+    }
+  };
+
   return (
     <>
       <Card sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 500, padding: 3 }}>
@@ -120,9 +130,10 @@ function App() {
             label="To-do List"
             fullWidth
             value={newTodoTitle}
+            onKeyDown={handleKeyDown}
             onChange={(e) => setNewTodoTitle(e.target.value)}
           />
-          <Button variant="contained" fullWidth onClick={state ? handleUpdateTitle(clickId) : handleAddTodo}>{state ? "Edit To-do list" : "+ ADD"}</Button>
+          <Button variant="contained" fullWidth onClick={state ? handleUpdateTitle(clickId) : handleAddTodo} >{state ? "Edit To-do list" : "+ ADD"}</Button>
           <Card sx={{ minWidth: 400, mt: 2 }}>
             <CardContent>
               <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
@@ -131,9 +142,10 @@ function App() {
                   return (
                     <ListItem
                       key={value.id}
+                      className={clickId === value.id ? (state ? 'blue-background' : 'normal-background') : undefined}
                       secondaryAction={
                         <Stack direction="row" >
-                          <IconButton  edge="end" aria-label="comments" onClick={handleUpdateTitle(value.id)}>
+                          <IconButton edge="end" aria-label="comments" onClick={handleUpdateTitle(value.id)}>
                             {clickId === value.id && (
                               state ? <ClearIcon style={{ color: "green" }} /> : <EditIcon style={{ color: "green" }} />
                             )}
@@ -156,7 +168,7 @@ function App() {
                             inputProps={{ 'aria-labelledby': labelId }}
                           />
                         </ListItemIcon>
-                        <ListItemText sx={{ mr: 5  }} id={labelId} primary={value.title} style={{ textDecoration: value.status ? 'line-through' : 'none',overflow: 'auto' }} />
+                        <ListItemText sx={{ mr: 5 }} id={labelId} primary={value.title} style={{ textDecoration: value.status ? 'line-through' : 'none', overflow: 'auto' }} />
                       </ListItemButton>
                     </ListItem>
                   );
@@ -164,7 +176,6 @@ function App() {
               </List>
             </CardContent>
           </Card>
-
         </CardContent>
       </Card>
 

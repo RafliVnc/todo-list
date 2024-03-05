@@ -4,7 +4,12 @@
   padding: 2rem;
   text-align: center;
 }
-
+.blue-background{
+  background-color: #e9e9e9 
+}
+.normal-background{
+  background-color: none
+}
 .logo {
   height: 6em;
   padding: 1.5em;
