@@ -14,6 +14,7 @@ import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
 import Typography from '@mui/material/Typography';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ClearIcon from '@mui/icons-material/Clear';
 import axios from "axios";
 import './App.css';
 
@@ -25,7 +26,9 @@ interface TodoProps {
 
 function App() {
   const [todos, setTodos] = useState<TodoProps[]>([]);
+  const [state, setState] = React.useState<boolean>(false)
   const [newTodoTitle, setNewTodoTitle] = useState<string>('');
+  const [clickId, setClickId] = useState<number>(0);
 
   useEffect(() => {
     axios.get<TodoProps[]>('http://localhost:3000/get')
@@ -62,8 +65,15 @@ function App() {
   };
 
   const handleUpdateTitle = (id: number) => () => {
+    setState(!state) ;
     if (!newTodoTitle) {
-      alert("Untuk Edit isi bagian To-do list dan click edit icon")
+      setNewTodoTitle(todos.find(todo => todo.id === id)?.title || '')
+      setClickId(id)
+      return;
+    }
+    if (id !== clickId) {
+      setNewTodoTitle('');
+      setState(!state)
       return;
     }
     axios.put(`http://localhost:3000/post/${id}`, { title: newTodoTitle })
@@ -112,8 +122,8 @@ function App() {
             value={newTodoTitle}
             onChange={(e) => setNewTodoTitle(e.target.value)}
           />
-          <Button variant="contained" fullWidth onClick={handleAddTodo}>+ ADD</Button>
-          <Card sx={{ minWidth: 300, mt: 2 }}>
+          <Button variant="contained" fullWidth onClick={state ? handleUpdateTitle(clickId) : handleAddTodo}>{state ? "Edit To-do list" : "+ ADD"}</Button>
+          <Card sx={{ minWidth: 400, mt: 2 }}>
             <CardContent>
               <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
                 {todos.map((value) => {
@@ -122,9 +132,12 @@ function App() {
                     <ListItem
                       key={value.id}
                       secondaryAction={
-                        <Stack direction="row">
-                          <IconButton edge="end" aria-label="comments" onClick={handleUpdateTitle(value.id)}>
-                            <EditIcon style={{ color: "green" }} />
+                        <Stack direction="row" >
+                          <IconButton  edge="end" aria-label="comments" onClick={handleUpdateTitle(value.id)}>
+                            {clickId === value.id && (
+                              state ? <ClearIcon style={{ color: "green" }} /> : <EditIcon style={{ color: "green" }} />
+                            )}
+                            {clickId !== value.id && <EditIcon style={{ color: "green" }} />}
                           </IconButton>
                           <IconButton edge="end" aria-label="comments" onClick={handleDeleteTodo(value.id)}>
                             <DeleteIcon style={{ color: "red" }} />
@@ -143,7 +156,7 @@ function App() {
                             inputProps={{ 'aria-labelledby': labelId }}
                           />
                         </ListItemIcon>
-                        <ListItemText sx={{ mr: 4 }} id={labelId} primary={value.title} style={{ textDecoration: value.status ? 'line-through' : 'none' }} />
+                        <ListItemText sx={{ mr: 5  }} id={labelId} primary={value.title} style={{ textDecoration: value.status ? 'line-through' : 'none',overflow: 'auto' }} />
                       </ListItemButton>
                     </ListItem>
                   );
